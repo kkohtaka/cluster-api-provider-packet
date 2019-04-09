@@ -20,14 +20,23 @@ import (
 	"flag"
 	"os"
 
-	"github.com/kkohtaka/cluster-api-provider-packet/pkg/apis"
-	"github.com/kkohtaka/cluster-api-provider-packet/pkg/controller"
-	"github.com/kkohtaka/cluster-api-provider-packet/pkg/webhook"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	clusterapis "sigs.k8s.io/cluster-api/pkg/apis"
+	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
+	"sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset"
+	capicluster "sigs.k8s.io/cluster-api/pkg/controller/cluster"
+	capimachine "sigs.k8s.io/cluster-api/pkg/controller/machine"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/apis"
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/actuators/cluster"
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/actuators/machine"
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/controller"
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/webhook"
 )
 
 func main() {
@@ -55,12 +64,45 @@ func main() {
 
 	log.Info("Registering Components.")
 
+	cs, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		log.Error(err, "unable to set up clientset")
+		os.Exit(1)
+	}
+
+	clusterActuator, err := cluster.NewActuator(cluster.ActuatorParams{
+		ClustersGetter: cs.ClusterV1alpha1(),
+	})
+	if err != nil {
+		log.Error(err, "unable to create cluster actuator")
+		os.Exit(1)
+	}
+
+	machineActuator, err := machine.NewActuator(machine.ActuatorParams{
+		MachinesGetter: cs.ClusterV1alpha1(),
+	})
+	if err != nil {
+		log.Error(err, "unable to create machine actuator")
+		os.Exit(1)
+	}
+
+	common.RegisterClusterProvisioner(machine.ProviderName, clusterActuator)
+
 	// Setup Scheme for all resources
 	log.Info("setting up scheme")
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "unable add APIs to scheme")
 		os.Exit(1)
 	}
+
+	if err := clusterapis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "unable add cluster APIs to scheme")
+		os.Exit(1)
+	}
+
+	capimachine.AddWithActuator(mgr, machineActuator)
+
+	capicluster.AddWithActuator(mgr, clusterActuator)
 
 	// Setup all Controllers
 	log.Info("Setting up controller")
