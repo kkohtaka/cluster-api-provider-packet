@@ -10,12 +10,78 @@
   version = "v0.37.4"
 
 [[projects]]
+  digest = "1:d087148460449bd94a42fb7410f2c8cadca85f5a74d9d08bcdf2e96166247d31"
+  name = "contrib.go.opencensus.io/exporter/ocagent"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "dcb33c7f3b7cfe67e8a2cea10207ede1b7c40764"
+  version = "v0.4.12"
+
+[[projects]]
+  digest = "1:db383b6950832e7161219b84c4b97ee02d8a9fde28873928fcb48f3a35f53eab"
+  name = "github.com/Azure/go-autorest"
+  packages = [
+    "autorest",
+    "autorest/adal",
+    "autorest/azure",
+    "autorest/date",
+    "logger",
+    "tracing",
+  ]
+  pruneopts = "T"
+  revision = "d10011c9c6fd34ca45f1e15ee330e3af8ed8b96a"
+  version = "v11.7.1"
+
+[[projects]]
   digest = "1:464aef731a5f82ded547c62e249a2e9ec59fbbc9ddab53cda7b9857852630a61"
   name = "github.com/appscode/jsonpatch"
   packages = ["."]
   pruneopts = "T"
   revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
   version = "1.0.0"
+
+[[projects]]
+  digest = "1:969d3f001bd7a3b152098690a11911a0dab9f7c1f9857c445b9a1b8ed3db5895"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/ini",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/ec2query",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/ec2",
+    "service/ec2/ec2iface",
+    "service/elb",
+    "service/elb/elbiface",
+    "service/sts",
+  ]
+  pruneopts = "T"
+  revision = "56c1def75689cceec1fa6f14c2eedb4b798827f9"
+  version = "v1.19.11"
 
 [[projects]]
   branch = "master"
@@ -26,12 +92,35 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:10139b9c841acd336ceff02e8a85e0c558dee738b2277bb24d61d9d3c90ef1f2"
+  name = "github.com/census-instrumentation/opencensus-proto"
+  packages = [
+    "gen-go/agent/common/v1",
+    "gen-go/agent/metrics/v1",
+    "gen-go/agent/trace/v1",
+    "gen-go/metrics/v1",
+    "gen-go/resource/v1",
+    "gen-go/trace/v1",
+  ]
+  pruneopts = "T"
+  revision = "a105b96453fe85139acc07b68de48f2cbdd71249"
+  version = "v0.2.0"
+
+[[projects]]
   digest = "1:9f42202ac457c462ad8bb9642806d275af9ab4850cf0b1960b9c6f083d4a309a"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "T"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  digest = "1:6b014c67cb522566c30ef02116f9acb50cd60954708cf92c6654e2985696db18"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   digest = "1:628563098b6c90c4658950c43396b28cd0cb6adcdbfe557bd0f425e0b06f1e61"
@@ -99,11 +188,18 @@
   digest = "1:c06028bbc52478d997bbc08facb0c315aabc2295094d7bf8833756aa9aa25504"
   name = "github.com/golang/protobuf"
   packages = [
+    "jsonpb",
     "proto",
+    "protoc-gen-go/descriptor",
+    "protoc-gen-go/generator",
+    "protoc-gen-go/generator/internal/remap",
+    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/struct",
     "ptypes/timestamp",
+    "ptypes/wrappers",
   ]
   pruneopts = "T"
   revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
@@ -147,6 +243,22 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:57d98c28615a652d9bdc73ea0d1f3bf2dfc78f972f6448d687a75936a051b55f"
+  name = "github.com/gophercloud/gophercloud"
+  packages = [
+    ".",
+    "openstack",
+    "openstack/identity/v2/tenants",
+    "openstack/identity/v2/tokens",
+    "openstack/identity/v3/tokens",
+    "openstack/utils",
+    "pagination",
+  ]
+  pruneopts = "T"
+  revision = "2c55d17f707cc8333ca4f49690cb2970d12a25f6"
+
+[[projects]]
+  branch = "master"
   digest = "1:2a7b09c37abc890d89d5c66cc60c9559c3628f09c16cae54a902aa3673d69362"
   name = "github.com/gregjones/httpcache"
   packages = [
@@ -155,6 +267,18 @@
   ]
   pruneopts = "T"
   revision = "3befbb6ad0cc97d4c25d851e9528915809e1a22f"
+
+[[projects]]
+  digest = "1:d26054aef028b782f9b65c29f17b8b6a5c75e302b6656f370b9c0788b1e35a00"
+  name = "github.com/grpc-ecosystem/grpc-gateway"
+  packages = [
+    "internal",
+    "runtime",
+    "utilities",
+  ]
+  pruneopts = "T"
+  revision = "20f268a412e5b342ebfb1a0eef7c3b7bd6c260ea"
+  version = "v1.8.5"
 
 [[projects]]
   digest = "1:d15ee511aa0f56baacc1eb4c6b922fa1c03b38413b6be18166b996d82a0156ea"
@@ -196,6 +320,13 @@
   pruneopts = "T"
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
+
+[[projects]]
+  digest = "1:b3f2dea8fe8eadb5833f7c8a2ef35dae07308bf7a4d0fee7f37774314e1964d3"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:ee5840274624ad20cac08227aeca582fbdaf3727ef9dd37ae935706240679e09"
@@ -407,6 +538,33 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:b0115d3a61a91feb9163bd91ca59d51fd6d40e2ea081293273263699ecb0c3d3"
+  name = "go.opencensus.io"
+  packages = [
+    ".",
+    "internal",
+    "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
+    "plugin/ocgrpc",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
+    "plugin/ochttp/propagation/tracecontext",
+    "resource",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/internal",
+    "trace/propagation",
+    "trace/tracestate",
+  ]
+  pruneopts = "T"
+  revision = "43463a80402d8447b7fce0d2c58edf1687ff0b58"
+  version = "v0.19.3"
+
+[[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
   name = "go.uber.org/atomic"
   packages = ["."]
@@ -459,6 +617,8 @@
     "http2",
     "http2/hpack",
     "idna",
+    "internal/timeseries",
+    "trace",
   ]
   pruneopts = "T"
   revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
@@ -476,6 +636,14 @@
   ]
   pruneopts = "T"
   revision = "9f3314589c9a9136388751d9adae6b0ed400978a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:79827f6f089bb46de1bbdcf51f75c184dafeb3638a6f89598f93279acac4be1f"
+  name = "golang.org/x/sync"
+  packages = ["semaphore"]
+  pruneopts = "T"
+  revision = "56d357773e8497dfd526f0727e187720d1093757"
 
 [[projects]]
   branch = "master"
@@ -552,6 +720,25 @@
   revision = "e5b8258f49188ec2c4702802a35d1ea0c7ccee77"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d9d3a231c70b17470fc134900032da48d5c146f0f4a2ce12ceb92704dae8d67d"
+  name = "golang.org/x/xerrors"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = "T"
+  revision = "1f06c39b43733b74392b1972507822714ced3242"
+
+[[projects]]
+  digest = "1:a6bb6f88e98d3fdd0aa029d1e47f884fac19c3d11b706c01d9f1fb56aa7292fc"
+  name = "google.golang.org/api"
+  packages = ["support/bundler"]
+  pruneopts = "T"
+  revision = "0cbcb99a9ea0c8023c794b2693cbe1def82ed4d7"
+  version = "v0.3.2"
+
+[[projects]]
   digest = "1:0c4496c1ac6b225c699524bf78df201f895305d7f6a0fee3d8e99cb244e0474e"
   name = "google.golang.org/appengine"
   packages = [
@@ -569,6 +756,59 @@
   pruneopts = "T"
   revision = "54a98f90d1c46b7731eb8fb305d2a321c30ef610"
   version = "v1.5.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6cbc03e8d4c5724d6228c88f1402d8cbd0a515561f73f0cecbb72f3d6576ff28"
+  name = "google.golang.org/genproto"
+  packages = [
+    "googleapis/api/httpbody",
+    "googleapis/rpc/status",
+    "protobuf/field_mask",
+  ]
+  pruneopts = "T"
+  revision = "64821d5d210748c883cd2b809589555ae4654203"
+
+[[projects]]
+  digest = "1:1d0bbb36a1999ee14484970ed3ccb272bc9454e74c12320db160e23846ff5c3a"
+  name = "google.golang.org/grpc"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "binarylog/grpc_binarylog_v1",
+    "codes",
+    "connectivity",
+    "credentials",
+    "credentials/internal",
+    "encoding",
+    "encoding/proto",
+    "grpclog",
+    "internal",
+    "internal/backoff",
+    "internal/balancerload",
+    "internal/binarylog",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "internal/grpcsync",
+    "internal/syscall",
+    "internal/transport",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "stats",
+    "status",
+    "tap",
+  ]
+  pruneopts = "T"
+  revision = "236199dd5f8031d698fb64091194aecd1c3895b2"
+  version = "v1.20.0"
 
 [[projects]]
   digest = "1:7fc160b460a6fc506b37fcca68332464c3f2cd57b6e3f111f26c5bbfd2d5518e"
@@ -701,6 +941,7 @@
     "pkg/util/uuid",
     "pkg/util/validation",
     "pkg/util/validation/field",
+    "pkg/util/version",
     "pkg/util/wait",
     "pkg/util/yaml",
     "pkg/version",
@@ -756,8 +997,12 @@
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
     "pkg/version",
+    "plugin/pkg/client/auth",
+    "plugin/pkg/client/auth/azure",
     "plugin/pkg/client/auth/exec",
     "plugin/pkg/client/auth/gcp",
+    "plugin/pkg/client/auth/oidc",
+    "plugin/pkg/client/auth/openstack",
     "rest",
     "rest/watch",
     "restmapper",
@@ -791,6 +1036,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:57ea5fa12e96ca26b59806c16918b4c1296ffb0228da2896b467e3b98c50115d"
+  name = "k8s.io/cluster-bootstrap"
+  packages = [
+    "token/api",
+    "token/util",
+  ]
+  pruneopts = "T"
+  revision = "851bc88fa7eae34bca63be645104eb0546a3a127"
+
+[[projects]]
+  branch = "master"
   digest = "1:9f94f3f0b8c8c37ca81ca2e996877ebfa2bd33cd4c3df78139df095c16e96df6"
   name = "k8s.io/code-generator"
   packages = [
@@ -809,6 +1065,14 @@
   ]
   pruneopts = "T"
   revision = "826a68e0d1203c132e5c01e06e271db403b08701"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8723d59fcfb8c3e2cf7b0f6bfb1a3135ee4281ff95a07868685fac7a1b4cc523"
+  name = "k8s.io/component-base"
+  packages = ["config"]
+  pruneopts = "T"
+  revision = "a7e0d79a881104735ba0bf65e1ba913079f2f455"
 
 [[projects]]
   branch = "master"
@@ -843,9 +1107,38 @@
   revision = "94e1e7b7574c44c4c0f2007de6fe617e259191f3"
 
 [[projects]]
+  digest = "1:ba3eb05eee8cdf91019f2a7708d879d6172f7cadffa443b27cfec4cbcb1e0773"
+  name = "k8s.io/kubernetes"
+  packages = [
+    "cmd/kubeadm/app/apis/kubeadm",
+    "cmd/kubeadm/app/apis/kubeadm/v1beta1",
+    "cmd/kubeadm/app/constants",
+    "pkg/apis/core",
+    "pkg/kubelet/apis/config",
+    "pkg/proxy/apis/config",
+    "pkg/registry/core/service/allocator",
+    "pkg/registry/core/service/ipallocator",
+  ]
+  pruneopts = "T"
+  revision = "b7394102d6ef778017f2ca4046abbaa23b88c290"
+  version = "v1.14.1"
+
+[[projects]]
   digest = "1:bc04752ec8a48d212a0db41c2085bb468ae7c8c34bcb317f552b68f4fe34865b"
   name = "sigs.k8s.io/cluster-api"
   packages = [
+    "cmd/clusterctl/clientcmd",
+    "cmd/clusterctl/clusterdeployer",
+    "cmd/clusterctl/clusterdeployer/bootstrap",
+    "cmd/clusterctl/clusterdeployer/bootstrap/existing",
+    "cmd/clusterctl/clusterdeployer/bootstrap/kind",
+    "cmd/clusterctl/clusterdeployer/bootstrap/minikube",
+    "cmd/clusterctl/clusterdeployer/clusterclient",
+    "cmd/clusterctl/clusterdeployer/provider",
+    "cmd/clusterctl/cmd",
+    "cmd/clusterctl/phases",
+    "cmd/clusterctl/providercomponents",
+    "cmd/clusterctl/validation",
     "pkg/apis",
     "pkg/apis/cluster/common",
     "pkg/apis/cluster/v1alpha1",
@@ -855,11 +1148,30 @@
     "pkg/controller/cluster",
     "pkg/controller/error",
     "pkg/controller/machine",
+    "pkg/controller/noderefutil",
     "pkg/util",
   ]
   pruneopts = "T"
   revision = "29fee0a9ef590af33bbaa167ed17a8be50825679"
   version = "0.1.0"
+
+[[projects]]
+  digest = "1:d4e1eee2296af9ddedf17bb89f6eb730bae397325afb6734daee4349917f403a"
+  name = "sigs.k8s.io/cluster-api-provider-aws"
+  packages = [
+    "pkg/apis/awsprovider/v1alpha1",
+    "pkg/cloud/aws/actuators",
+    "pkg/cloud/aws/converters",
+    "pkg/cloud/aws/services/awserrors",
+    "pkg/cloud/aws/services/certificates",
+    "pkg/cloud/aws/services/elb",
+    "pkg/cloud/aws/services/wait",
+    "pkg/cloud/aws/tags",
+    "pkg/deployer",
+  ]
+  pruneopts = "T"
+  revision = "e4b898551a60f6c699dd506fcb45b8fd9708a3e2"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:5aa50779f75cc439edd3455a6dee7cf179b52f8dde764a47cc929693485d1afb"
@@ -953,6 +1265,7 @@
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "golang.org/x/net/context",
+    "golang.org/x/xerrors",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
@@ -966,6 +1279,9 @@
     "k8s.io/client-go/rest",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
+    "k8s.io/klog",
+    "sigs.k8s.io/cluster-api-provider-aws/pkg/deployer",
+    "sigs.k8s.io/cluster-api/cmd/clusterctl/cmd",
     "sigs.k8s.io/cluster-api/pkg/apis",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/common",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
@@ -987,6 +1303,7 @@
     "sigs.k8s.io/controller-runtime/pkg/source",
     "sigs.k8s.io/controller-tools/cmd/controller-gen",
     "sigs.k8s.io/testing_frameworks/integration",
+    "sigs.k8s.io/yaml",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
