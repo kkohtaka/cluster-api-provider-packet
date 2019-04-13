@@ -20,12 +20,16 @@ import (
 	"fmt"
 	"log"
 
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/actuators"
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/deployer"
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 	client "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
 )
 
 // Actuator is responsible for performing cluster reconciliation
 type Actuator struct {
+	*deployer.Deployer
+
 	clustersGetter client.ClustersGetter
 }
 
@@ -37,6 +41,7 @@ type ActuatorParams struct {
 // NewActuator creates a new Actuator
 func NewActuator(params ActuatorParams) (*Actuator, error) {
 	return &Actuator{
+		Deployer:       deployer.New(deployer.Params{ScopeGetter: actuators.DefaultScopeGetter}),
 		clustersGetter: params.ClustersGetter,
 	}, nil
 }

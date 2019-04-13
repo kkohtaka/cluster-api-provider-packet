@@ -2,7 +2,7 @@
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 
-all: test manager
+all: test manager clusterctl
 
 # Run tests
 test: generate fmt vet manifests
@@ -11,6 +11,10 @@ test: generate fmt vet manifests
 # Build manager binary
 manager: generate fmt vet
 	go build -o bin/manager github.com/kkohtaka/cluster-api-provider-packet/cmd/manager
+
+# Build manager binary
+clusterctl: generate fmt vet
+	go build -o bin/clusterctl github.com/kkohtaka/cluster-api-provider-packet/cmd/clusterctl
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet

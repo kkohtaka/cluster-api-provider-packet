@@ -1,0 +1,36 @@
+apiVersion: cluster.k8s.io/v1alpha1
+kind: MachineList
+items:
+- apiVersion: cluster.k8s.io/v1alpha1
+  kind: Machine
+  metadata:
+    generateName: packet-master-
+    labels:
+      cluster.k8s.io/cluster-name: example
+      set: master
+  spec:
+    providerSpec:
+      value:
+        apiVersion: packetproviderconfig/v1alpha1
+        kind: PacketMachineProviderSpec
+        roles:
+        - Master
+    versions:
+      kubelet: 1.14.1
+      controlPlane: 1.14.1
+- apiVersion: cluster.k8s.io/v1alpha1
+  kind: Machine
+  metadata:
+    generateName: packet-node-
+    labels:
+      cluster.k8s.io/cluster-name: example
+      set: node
+  spec:
+    providerSpec:
+      value:
+        apiVersion: packetproviderconfig/v1alpha1
+        kind: PacketMachineProviderSpec
+        roles:
+        - Node
+    versions:
+      kubelet: 1.14.1
