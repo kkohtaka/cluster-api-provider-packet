@@ -1,6 +1,6 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= quay.io/kkohtaka/cluster-api-provider-packet:latest
 
 all: test manager clusterctl
 

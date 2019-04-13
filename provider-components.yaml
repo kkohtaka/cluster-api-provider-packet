@@ -365,7 +365,7 @@ spec:
               fieldPath: metadata.namespace
         - name: SECRET_NAME
           value: cluster-api-provider-packet-webhook-server-secret
-        image: IMAGE_URL
+        image: quay.io/kkohtaka/cluster-api-provider-packet
         imagePullPolicy: Always
         name: manager
         ports:
