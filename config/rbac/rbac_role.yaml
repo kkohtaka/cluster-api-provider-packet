@@ -5,6 +5,33 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machines
+  - machines/status
+  - machinedeployments
+  - machinedeployments/status
+  - machinesets
+  - machinesets/status
+  - machineclasses
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - clusters
+  - clusters/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - packet.cluster.k8s.io
   resources:
   - packetclusterproviderspecs
