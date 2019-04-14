@@ -25,12 +25,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func TestStoragePacketClusterProviderStatus(t *testing.T) {
+func TestStoragePacketClusterProvider(t *testing.T) {
 	key := types.NamespacedName{
 		Name:      "foo",
 		Namespace: "default",
 	}
-	created := &PacketClusterProviderStatus{
+	created := &PacketClusterProvider{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "foo",
 			Namespace: "default",
@@ -38,7 +38,7 @@ func TestStoragePacketClusterProviderStatus(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 
 	// Test Create
-	fetched := &PacketClusterProviderStatus{}
+	fetched := &PacketClusterProvider{}
 	g.Expect(c.Create(context.TODO(), created)).To(gomega.Succeed())
 
 	g.Expect(c.Get(context.TODO(), key, fetched)).To(gomega.Succeed())

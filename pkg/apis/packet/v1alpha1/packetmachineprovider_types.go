@@ -23,14 +23,14 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// PacketClusterProviderSpecSpec defines the desired state of PacketClusterProviderSpec
-type PacketClusterProviderSpecSpec struct {
+// PacketMachineProviderSpec defines the desired state of PacketMachineProvider
+type PacketMachineProviderSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-// PacketClusterProviderSpecStatus defines the observed state of PacketClusterProviderSpec
-type PacketClusterProviderSpecStatus struct {
+// PacketMachineProviderStatus defines the observed state of PacketMachineProvider
+type PacketMachineProviderStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -38,25 +38,25 @@ type PacketClusterProviderSpecStatus struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// PacketClusterProviderSpec is the Schema for the packetclusterproviderspecs API
+// PacketMachineProvider is the Schema for the packetmachineproviders API
 // +k8s:openapi-gen=true
-type PacketClusterProviderSpec struct {
+type PacketMachineProvider struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   PacketClusterProviderSpecSpec   `json:"spec,omitempty"`
-	Status PacketClusterProviderSpecStatus `json:"status,omitempty"`
+	Spec   PacketMachineProviderSpec   `json:"spec,omitempty"`
+	Status PacketMachineProviderStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// PacketClusterProviderSpecList contains a list of PacketClusterProviderSpec
-type PacketClusterProviderSpecList struct {
+// PacketMachineProviderList contains a list of PacketMachineProvider
+type PacketMachineProviderList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []PacketClusterProviderSpec `json:"items"`
+	Items           []PacketMachineProvider `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&PacketClusterProviderSpec{}, &PacketClusterProviderSpecList{})
+	SchemeBuilder.Register(&PacketMachineProvider{}, &PacketMachineProviderList{})
 }
