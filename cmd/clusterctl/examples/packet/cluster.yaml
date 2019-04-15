@@ -13,4 +13,5 @@ spec:
     value:
       apiVersion: packetproviderconfig/v1alpha1
       kind: PacketClusterProviderSpec
+      secretRef: example-packet-secret
       project: example

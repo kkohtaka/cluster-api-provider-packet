@@ -27,6 +27,11 @@ spec:
         metadata:
           type: object
         spec:
+          properties:
+            secretRef:
+              type: string
+          required:
+          - secretRef
           type: object
         status:
           type: object
