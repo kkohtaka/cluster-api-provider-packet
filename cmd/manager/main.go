@@ -80,6 +80,7 @@ func main() {
 
 	machineActuator, err := machine.NewActuator(machine.ActuatorParams{
 		MachinesGetter: cs.ClusterV1alpha1(),
+		Client:         mgr.GetClient(),
 	})
 	if err != nil {
 		log.Error(err, "unable to create machine actuator")
@@ -103,6 +104,13 @@ func main() {
 	capimachine.AddWithActuator(mgr, machineActuator)
 
 	capicluster.AddWithActuator(mgr, clusterActuator)
+
+	// Setup Scheme for all resources
+	log.Info("setting up scheme")
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "unable add APIs to scheme")
+		os.Exit(1)
+	}
 
 	// Setup all Controllers
 	log.Info("Setting up controller")

@@ -21,8 +21,17 @@ import (
 	"fmt"
 	"log"
 
+	errors "golang.org/x/xerrors"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
-	client "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
+	clusterclient "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	packet "github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/client"
+	"github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/util"
 )
 
 const (
@@ -31,18 +40,21 @@ const (
 
 // Actuator is responsible for performing machine reconciliation
 type Actuator struct {
-	machinesGetter client.MachinesGetter
+	machinesGetter clusterclient.MachinesGetter
+	client         client.Client
 }
 
 // ActuatorParams holds parameter information for Actuator
 type ActuatorParams struct {
-	MachinesGetter client.MachinesGetter
+	MachinesGetter clusterclient.MachinesGetter
+	Client         client.Client
 }
 
 // NewActuator creates a new Actuator
 func NewActuator(params ActuatorParams) (*Actuator, error) {
 	return &Actuator{
 		machinesGetter: params.MachinesGetter,
+		client:         params.Client,
 	}, nil
 }
 
@@ -67,7 +79,49 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 // Exists test for the existance of a machine and is invoked by the Machine Controller
 func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) (bool, error) {
 	log.Printf("Checking if machine %v for cluster %v exists.", machine.Name, cluster.Name)
-	return false, fmt.Errorf("TODO: Not yet implemented")
+	if cluster == nil {
+		return false, errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+	}
+	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
+	if err != nil {
+		return false, errors.Errorf("decode machine provider clusterSpec for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+
+	// TODO(kkohtaka): Should check missing client?
+	if a.client == nil {
+		return false, errors.Errorf("missing clinet")
+	}
+	var secret corev1.Secret
+	objKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      clusterSpec.SecretRef,
+	}
+	err = a.client.Get(ctx, objKey, &secret)
+	if err != nil {
+		return false, errors.Errorf("get secret %v: %w", objKey, err)
+	}
+
+	status, err := util.ToMachineProviderStatus(&machine.Status)
+	if err != nil {
+		return false, errors.Errorf("decode machine provider status for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	if status.ID == "" {
+		log.Printf("Machine %v/%v isn't created yet", machine.Namespace, machine.Name)
+		return false, nil
+	}
+
+	c, err := packet.NewClient(&secret)
+	if err != nil {
+		return false, errors.Errorf("create Packet API client: %w", err)
+	}
+	exist, err := c.DoesDeviceExist(status.ID)
+	if err != nil {
+		return false, errors.Errorf("check Device existence for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	return exist, nil
 }
 
 // The Machine Actuator interface must implement GetIP and GetKubeConfig functions as a workaround for issues

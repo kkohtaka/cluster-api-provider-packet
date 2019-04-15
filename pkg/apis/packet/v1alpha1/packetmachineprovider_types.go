@@ -20,19 +20,59 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // PacketMachineProviderSpec defines the desired state of PacketMachineProvider
 type PacketMachineProviderSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ProjectID    string `json:"projectID"`
+	Facility     string `json:"facility"`
+	Plan         string `json:"plan"`
+	Hostname     string `json:"hostname"`
+	OS           string `json:"os"`
+	BillingCycle string `json:"billing_cicle,omitempty"`
+	UserData     string `json:"userData,omitempty"`
 }
 
 // PacketMachineProviderStatus defines the observed state of PacketMachineProvider
 type PacketMachineProviderStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Ready bool `json:"ready"`
+
+	ID          string      `json:"id"`
+	State       State       `json:"state"`
+	IPAddresses []IPAddress `json:"ipAddresses,omitempty"`
+}
+
+type State string
+
+const (
+	StateActive       State = "active"
+	StateInactive     State = "inactive"
+	StateQueued       State = "queued"
+	StateProvisioning State = "provisioning"
+	StateUnknown      State = ""
+)
+
+func StringToState(state string) State {
+	switch state {
+	case string(StateActive):
+		return StateActive
+	case string(StateInactive):
+		return StateInactive
+	case string(StateQueued):
+		return StateQueued
+	case string(StateProvisioning):
+		return StateProvisioning
+	default:
+		return StateUnknown
+	}
+}
+
+type IPAddress struct {
+	ID            string `json:"id"`
+	Address       string `json:"address"`
+	Gateway       string `json:"gateway"`
+	Network       string `json:"network"`
+	AddressFamily int    `json:"addressFamily"`
+	Netmask       string `json:"netmask"`
+	Public        bool   `json:"public"`
 }
 
 // +genclient
