@@ -19,6 +19,8 @@ package util
 import (
 	errors "golang.org/x/xerrors"
 
+	"k8s.io/apimachinery/pkg/util/json"
+
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 	"sigs.k8s.io/yaml"
 
@@ -63,4 +65,12 @@ func ToMachineProviderStatus(src *clusterv1.MachineStatus) (*packetv1alpha1.Pack
 		}
 	}
 	return &dst, nil
+}
+
+func ToRaw(src interface{}) ([]byte, error) {
+	data, err := json.Marshal(src)
+	if err != nil {
+		return nil, errors.Errorf("marshal to raw data: %w", err)
+	}
+	return data, nil
 }
