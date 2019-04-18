@@ -88,10 +88,6 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 			machine.Namespace, machine.Name, err)
 	}
 
-	// TODO(kkohtaka): Should check missing client?
-	if a.client == nil {
-		return false, errors.Errorf("missing clinet")
-	}
 	var secret corev1.Secret
 	objKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
