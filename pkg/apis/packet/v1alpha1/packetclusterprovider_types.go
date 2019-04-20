@@ -22,7 +22,11 @@ import (
 
 // PacketClusterProviderSpec defines the desired state of PacketClusterProvider
 type PacketClusterProviderSpec struct {
-	SecretRef string `json:"secretRef"`
+	Project      string `json:"project"`
+	Facility     string `json:"facility"`
+	Plan         string `json:"plan"`
+	BillingCycle string `json:"billingCycle,omitempty"`
+	SecretRef    string `json:"secretRef"`
 }
 
 // PacketClusterProviderStatus defines the observed state of PacketClusterProvider

@@ -13,5 +13,7 @@ spec:
     value:
       apiVersion: packetproviderconfig/v1alpha1
       kind: PacketClusterProviderSpec
-      secretRef: example-packet-secret
       project: example
+      facility: nrt1
+      plan: t1.small.x86
+      secretRef: example-packet-secret

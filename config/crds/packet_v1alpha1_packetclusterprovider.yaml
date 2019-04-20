@@ -28,9 +28,20 @@ spec:
           type: object
         spec:
           properties:
+            billingCycle:
+              type: string
+            facility:
+              type: string
+            plan:
+              type: string
+            project:
+              type: string
             secretRef:
               type: string
           required:
+          - project
+          - facility
+          - plan
           - secretRef
           type: object
         status:

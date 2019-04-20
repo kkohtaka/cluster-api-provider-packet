@@ -20,14 +20,18 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
+	"time"
 
 	errors "golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 	clusterclient "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
+	clustererror "sigs.k8s.io/cluster-api/pkg/controller/error"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	packet "github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/client"
@@ -36,6 +40,8 @@ import (
 
 const (
 	ProviderName = "packet"
+
+	DefaultOS = "coreos_stable"
 )
 
 // Actuator is responsible for performing machine reconciliation
@@ -61,19 +67,164 @@ func NewActuator(params ActuatorParams) (*Actuator, error) {
 // Create creates a machine and is invoked by the Machine Controller
 func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	log.Printf("Creating machine %v for cluster %v.", machine.Name, cluster.Name)
-	return fmt.Errorf("TODO: Not yet implemented")
+	if cluster == nil {
+		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+	}
+
+	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
+	if err != nil {
+		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	var secret corev1.Secret
+	objKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      clusterSpec.SecretRef,
+	}
+	err = a.client.Get(ctx, objKey, &secret)
+	if err != nil {
+		return errors.Errorf("get secret %v: %w", objKey, err)
+	}
+	c, err := packet.NewClient(&secret)
+	if err != nil {
+		return errors.Errorf("create Packet API client: %w", err)
+	}
+
+	spec, err := util.ToMachineProviderSpec(&machine.Spec)
+	if err != nil {
+		return errors.Errorf("decode machine provider spec for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+
+	status, err := util.ToMachineProviderStatus(&machine.Status)
+	if err != nil {
+		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+
+	if status.ID != "" {
+		log.Printf("machine already has .Status.ID: %v", status.ID)
+	}
+
+	projectID, err := c.GetProjectID(clusterSpec.Project)
+	if err != nil {
+		return errors.Errorf("get project ID: %w", err)
+	}
+
+	newSpec := spec.DeepCopy()
+	newSpec.ProjectID = projectID
+	newSpec.Hostname = machine.Name
+	newSpec.Facility = clusterSpec.Facility
+	newSpec.Plan = clusterSpec.Plan
+	newSpec.BillingCycle = clusterSpec.BillingCycle
+	newSpec.OS = DefaultOS
+
+	newStatus, err := c.CreateDevice(newSpec)
+	if err != nil {
+		return errors.Errorf("create Device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+	}
+
+	newMachine := machine.DeepCopy()
+
+	if !reflect.DeepEqual(newSpec, spec) {
+		raw, err := util.ToRaw(newSpec)
+		if err != nil {
+			return errors.Errorf("generate raw data of machine provider spec for machine %v/%v: %w",
+				machine.Namespace, machine.Name, err)
+		}
+		newMachine.Spec.ProviderSpec.Value = &runtime.RawExtension{Raw: raw}
+
+		err = a.client.Update(ctx, newMachine)
+		if err != nil {
+			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+		}
+	}
+
+	if !reflect.DeepEqual(newStatus, status) {
+		raw, err := util.ToRaw(newStatus)
+		if err != nil {
+			return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
+				machine.Namespace, machine.Name, err)
+		}
+		newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+
+		err = a.client.Status().Update(ctx, newMachine)
+		if err != nil {
+			return errors.Errorf("update status of machine %v/%v", machine.Namespace, machine.Name, err)
+		}
+	}
+
+	return &clustererror.RequeueAfterError{
+		RequeueAfter: 15 * time.Second,
+	}
 }
 
 // Delete deletes a machine and is invoked by the Machine Controller
 func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	log.Printf("Deleting machine %v for cluster %v.", machine.Name, cluster.Name)
-	return fmt.Errorf("TODO: Not yet implemented")
+	log.Printf("TODO: MachineActuator.Delete() is not implemented yet.")
+	return nil
 }
 
 // Update updates a machine and is invoked by the Machine Controller
 func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	log.Printf("Updating machine %v for cluster %v.", machine.Name, cluster.Name)
-	return fmt.Errorf("TODO: Not yet implemented")
+	if cluster == nil {
+		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+	}
+
+	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
+	if err != nil {
+		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	var secret corev1.Secret
+	objKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      clusterSpec.SecretRef,
+	}
+	err = a.client.Get(ctx, objKey, &secret)
+	if err != nil {
+		return errors.Errorf("get secret %v: %w", objKey, err)
+	}
+	c, err := packet.NewClient(&secret)
+	if err != nil {
+		return errors.Errorf("create Packet API client: %w", err)
+	}
+
+	status, err := util.ToMachineProviderStatus(&machine.Status)
+	if err != nil {
+		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+
+	newStatus, err := c.GetDevice(status.ID)
+	if err != nil {
+		// TODO: Handle a NotFound error
+		return errors.Errorf("get device for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+
+	if !reflect.DeepEqual(newStatus, machine.Status) {
+		raw, err := util.ToRaw(newStatus)
+		if err != nil {
+			return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
+				machine.Namespace, machine.Name, err)
+		}
+		newMachine := machine.DeepCopy()
+		newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+
+		err = a.client.Status().Update(context.TODO(), newMachine)
+		if err != nil {
+			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+		}
+	}
+	if !newStatus.Ready {
+		return &clustererror.RequeueAfterError{
+			RequeueAfter: 15 * time.Second,
+		}
+	}
+	return nil
 }
 
 // Exists test for the existance of a machine and is invoked by the Machine Controller
