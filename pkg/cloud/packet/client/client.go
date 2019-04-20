@@ -54,7 +54,10 @@ type client struct {
 func (c *client) DoesDeviceExist(deviceID string) (bool, error) {
 	_, resp, err := c.c.Devices.Get(deviceID, nil)
 	if err != nil {
+		if resp != nil && resp.StatusCode == 404 {
+			return false, nil
+		}
 		return false, err
 	}
-	return resp.StatusCode != 404, nil
+	return true, nil
 }
