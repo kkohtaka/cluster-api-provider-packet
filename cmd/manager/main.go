@@ -79,8 +79,7 @@ func main() {
 	}
 
 	machineActuator, err := machine.NewActuator(machine.ActuatorParams{
-		MachinesGetter: cs.ClusterV1alpha1(),
-		Client:         mgr.GetClient(),
+		Client: mgr.GetClient(),
 	})
 	if err != nil {
 		log.Error(err, "unable to create machine actuator")

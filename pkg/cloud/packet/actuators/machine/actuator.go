@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
-	clusterclient "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
 	clustererror "sigs.k8s.io/cluster-api/pkg/controller/error"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -46,21 +45,18 @@ const (
 
 // Actuator is responsible for performing machine reconciliation
 type Actuator struct {
-	machinesGetter clusterclient.MachinesGetter
-	client         client.Client
+	client client.Client
 }
 
 // ActuatorParams holds parameter information for Actuator
 type ActuatorParams struct {
-	MachinesGetter clusterclient.MachinesGetter
-	Client         client.Client
+	Client client.Client
 }
 
 // NewActuator creates a new Actuator
 func NewActuator(params ActuatorParams) (*Actuator, error) {
 	return &Actuator{
-		machinesGetter: params.MachinesGetter,
-		client:         params.Client,
+		client: params.Client,
 	}, nil
 }
 
