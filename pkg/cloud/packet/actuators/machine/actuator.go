@@ -104,7 +104,6 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 			machine.Namespace, machine.Name, err)
 	}
 	if status.ID == "" {
-		log.Printf("Machine %v/%v isn't created yet", machine.Namespace, machine.Name)
 		return false, nil
 	}
 
@@ -114,7 +113,7 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 	}
 	exist, err := c.DoesDeviceExist(status.ID)
 	if err != nil {
-		return false, errors.Errorf("check Device existence for machine %v/%v: %w",
+		return false, errors.Errorf("check device existence for machine %v/%v: %w",
 			machine.Namespace, machine.Name, err)
 	}
 	return exist, nil
