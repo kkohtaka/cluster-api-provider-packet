@@ -96,9 +96,9 @@ func (c *client) CreateDevice(spec *packetv1alpha1.PacketMachineProviderSpec) (*
 }
 
 func (c *client) DoesDeviceExist(deviceID string) (bool, error) {
-	_, resp, err := c.c.Devices.Get(deviceID, nil)
+	_, _, err := c.c.Devices.Get(deviceID, nil)
 	if err != nil {
-		if resp != nil && resp.StatusCode == 404 {
+		if IsNotFoundError(err) {
 			return false, nil
 		}
 		return false, err
@@ -135,4 +135,12 @@ func newStatus(d *packngo.Device) *packetv1alpha1.PacketMachineProviderStatus {
 	status.Ready = status.State == packetv1alpha1.StateActive
 
 	return status
+}
+
+func IsNotFoundError(err error) bool {
+	re, ok := err.(*packngo.ErrorResponse)
+	if !ok {
+		return false
+	}
+	return re.Response != nil && re.Response.StatusCode == 404
 }

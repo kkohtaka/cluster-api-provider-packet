@@ -33,6 +33,7 @@ import (
 	clustererror "sigs.k8s.io/cluster-api/pkg/controller/error"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	packetv1alpha1 "github.com/kkohtaka/cluster-api-provider-packet/pkg/apis/packet/v1alpha1"
 	packet "github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/client"
 	"github.com/kkohtaka/cluster-api-provider-packet/pkg/cloud/packet/util"
 )
@@ -196,9 +197,13 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	newStatus, err := c.GetDevice(status.ID)
 	if err != nil {
-		// TODO: Handle a NotFound error
-		return errors.Errorf("get device for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		if packet.IsNotFoundError(err) {
+			// If a device specified by .Status.ID is not found, reset the .Status field
+			newStatus = &packetv1alpha1.PacketMachineProviderStatus{}
+		} else {
+			return errors.Errorf("get device for machine %v/%v: %w",
+				machine.Namespace, machine.Name, err)
+		}
 	}
 
 	if !reflect.DeepEqual(newStatus, machine.Status) {
