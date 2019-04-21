@@ -19,12 +19,10 @@ package cluster
 import (
 	"context"
 	"log"
-	"reflect"
 
 	errors "golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/actuators"
@@ -97,19 +95,14 @@ func (a *Actuator) Reconcile(cluster *clusterv1.Cluster) error {
 	newStatus := status.DeepCopy()
 	newStatus.ProjectID = projectID
 
-	if !reflect.DeepEqual(newStatus, status) {
-		raw, err := util.ToRaw(newStatus)
-		if err != nil {
-			return errors.Errorf("generate raw data of cluster provider status for cluster %v/%v: %w",
-				cluster.Namespace, cluster.Name, err)
-		}
-		newCluster := cluster.DeepCopy()
-		newCluster.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+	clusterKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Name,
+	}
 
-		err = a.client.Status().Update(context.TODO(), newCluster)
-		if err != nil {
-			return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
-		}
+	util.UpdateClusterProviderStatus(a.client, clusterKey, newStatus)
+	if err != nil {
+		return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
 	}
 	return nil
 }
@@ -127,19 +120,14 @@ func (a *Actuator) Delete(cluster *clusterv1.Cluster) error {
 	newStatus := status.DeepCopy()
 	newStatus.ProjectID = ""
 
-	if !reflect.DeepEqual(newStatus, status) {
-		raw, err := util.ToRaw(newStatus)
-		if err != nil {
-			return errors.Errorf("generate raw data of cluster provider status for cluster %v/%v: %w",
-				cluster.Namespace, cluster.Name, err)
-		}
-		newCluster := cluster.DeepCopy()
-		newCluster.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+	clusterKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Name,
+	}
 
-		err = a.client.Status().Update(context.TODO(), newCluster)
-		if err != nil {
-			return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
-		}
+	util.UpdateClusterProviderStatus(a.client, clusterKey, newStatus)
+	if err != nil {
+		return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
 	}
 	return nil
 }

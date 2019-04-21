@@ -82,6 +82,62 @@ func ToRaw(src interface{}) ([]byte, error) {
 	return data, nil
 }
 
+func UpdateClusterProviderSpec(
+	c client.Client,
+	clusterKey types.NamespacedName,
+	newSpec *packetv1alpha1.PacketClusterProviderSpec,
+) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var cluster clusterv1.Cluster
+		if err := c.Get(context.TODO(), clusterKey, &cluster); err != nil {
+			return errors.Errorf("get latest cluster %v: %w", clusterKey, err)
+		}
+
+		raw, err := ToRaw(newSpec)
+		if err != nil {
+			return errors.Errorf("generate raw data of cluster provider spec for cluster %v: %w", clusterKey, err)
+		}
+		newCluster := cluster.DeepCopy()
+		newCluster.Spec.ProviderSpec.Value = &runtime.RawExtension{Raw: raw}
+
+		if reflect.DeepEqual(newCluster, cluster) {
+			return nil
+		}
+		if err := c.Update(context.TODO(), newCluster); err != nil {
+			return errors.Errorf("update cluster %v: %w", clusterKey, err)
+		}
+		return nil
+	})
+}
+
+func UpdateClusterProviderStatus(
+	c client.Client,
+	clusterKey types.NamespacedName,
+	newStatus *packetv1alpha1.PacketClusterProviderStatus,
+) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var cluster clusterv1.Cluster
+		if err := c.Get(context.TODO(), clusterKey, &cluster); err != nil {
+			return errors.Errorf("get latest cluster %v: %w", clusterKey, err)
+		}
+
+		raw, err := ToRaw(newStatus)
+		if err != nil {
+			return errors.Errorf("generate raw data of cluster provider status for cluster %v: %w", clusterKey, err)
+		}
+		newCluster := cluster.DeepCopy()
+		newCluster.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+
+		if reflect.DeepEqual(newCluster, cluster) {
+			return nil
+		}
+		if err := c.Status().Update(context.TODO(), newCluster); err != nil {
+			return errors.Errorf("update cluster %v: %w", clusterKey, err)
+		}
+		return nil
+	})
+}
+
 func UpdateMachineProviderSpec(
 	c client.Client,
 	machineKey types.NamespacedName,
