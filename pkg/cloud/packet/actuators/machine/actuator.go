@@ -170,30 +170,28 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
 			machine.Namespace, machine.Name, err)
 	}
-	if status.ID == "" {
-		return errors.Errorf(".Status.ID is not set for machine %v/%v", machine.Namespace, machine.Name)
-	}
-
-	err = c.DeleteDevice(status.ID)
-	if err != nil {
-		if packet.IsNotFoundError(err) {
-			log.Printf("specified device %v for machine %v/%v has been already deleted",
-				status.ID, machine.Namespace, machine.Name)
-		} else {
-			return errors.Errorf("delete a device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+	if status.ID != "" {
+		err = c.DeleteDevice(status.ID)
+		if err != nil {
+			if packet.IsNotFoundError(err) {
+				log.Printf("specified device %v for machine %v/%v has been already deleted",
+					status.ID, machine.Namespace, machine.Name)
+			} else {
+				return errors.Errorf("delete a device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+			}
 		}
-	}
 
-	machineKey := types.NamespacedName{
-		Namespace: machine.Namespace,
-		Name:      machine.Name,
-	}
+		machineKey := types.NamespacedName{
+			Namespace: machine.Namespace,
+			Name:      machine.Name,
+		}
 
-	newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
+		newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
 
-	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
-	if err != nil {
-		return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+		err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
+		if err != nil {
+			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+		}
 	}
 	return nil
 }
