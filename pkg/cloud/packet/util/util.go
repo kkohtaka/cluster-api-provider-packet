@@ -17,11 +17,18 @@ limitations under the License.
 package util
 
 import (
+	"context"
+	"reflect"
+
 	errors "golang.org/x/xerrors"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/client-go/util/retry"
 
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	packetv1alpha1 "github.com/kkohtaka/cluster-api-provider-packet/pkg/apis/packet/v1alpha1"
@@ -73,4 +80,60 @@ func ToRaw(src interface{}) ([]byte, error) {
 		return nil, errors.Errorf("marshal to raw data: %w", err)
 	}
 	return data, nil
+}
+
+func UpdateMachineProviderSpec(
+	c client.Client,
+	machineKey types.NamespacedName,
+	newSpec *packetv1alpha1.PacketMachineProviderSpec,
+) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var machine clusterv1.Machine
+		if err := c.Get(context.TODO(), machineKey, &machine); err != nil {
+			return errors.Errorf("get latest machine %v: %w", machineKey, err)
+		}
+
+		raw, err := ToRaw(newSpec)
+		if err != nil {
+			return errors.Errorf("generate raw data of machine provider spec for machine %v: %w", machineKey, err)
+		}
+		newMachine := machine.DeepCopy()
+		newMachine.Spec.ProviderSpec.Value = &runtime.RawExtension{Raw: raw}
+
+		if reflect.DeepEqual(newMachine, machine) {
+			return nil
+		}
+		if err := c.Update(context.TODO(), newMachine); err != nil {
+			return errors.Errorf("update machine %v: %w", machineKey, err)
+		}
+		return nil
+	})
+}
+
+func UpdateMachineProviderStatus(
+	c client.Client,
+	machineKey types.NamespacedName,
+	newStatus *packetv1alpha1.PacketMachineProviderStatus,
+) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var machine clusterv1.Machine
+		if err := c.Get(context.TODO(), machineKey, &machine); err != nil {
+			return errors.Errorf("get latest machine %v: %w", machineKey, err)
+		}
+
+		raw, err := ToRaw(newStatus)
+		if err != nil {
+			return errors.Errorf("generate raw data of machine provider status for machine %v: %w", machineKey, err)
+		}
+		newMachine := machine.DeepCopy()
+		newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+
+		if reflect.DeepEqual(newMachine, machine) {
+			return nil
+		}
+		if err := c.Status().Update(context.TODO(), newMachine); err != nil {
+			return errors.Errorf("update machine %v: %w", machineKey, err)
+		}
+		return nil
+	})
 }

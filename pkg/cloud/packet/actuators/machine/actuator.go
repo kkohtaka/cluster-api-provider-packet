@@ -20,13 +20,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 
 	errors "golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
@@ -108,6 +106,11 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 		return errors.Errorf("get project ID: %w", err)
 	}
 
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
+	}
+
 	newSpec := spec.DeepCopy()
 	newSpec.ProjectID = projectID
 	newSpec.Hostname = machine.Name
@@ -116,39 +119,19 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	newSpec.BillingCycle = clusterSpec.BillingCycle
 	newSpec.OS = DefaultOS
 
+	err = util.UpdateMachineProviderSpec(a.client, machineKey, newSpec)
+	if err != nil {
+		return errors.Errorf("update spec for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+	}
+
 	newStatus, err := c.CreateDevice(newSpec)
 	if err != nil {
-		return errors.Errorf("create Device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+		return errors.Errorf("create device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
 	}
 
-	newMachine := machine.DeepCopy()
-
-	if !reflect.DeepEqual(newSpec, spec) {
-		raw, err := util.ToRaw(newSpec)
-		if err != nil {
-			return errors.Errorf("generate raw data of machine provider spec for machine %v/%v: %w",
-				machine.Namespace, machine.Name, err)
-		}
-		newMachine.Spec.ProviderSpec.Value = &runtime.RawExtension{Raw: raw}
-
-		err = a.client.Update(ctx, newMachine)
-		if err != nil {
-			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
-		}
-	}
-
-	if !reflect.DeepEqual(newStatus, status) {
-		raw, err := util.ToRaw(newStatus)
-		if err != nil {
-			return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
-				machine.Namespace, machine.Name, err)
-		}
-		newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
-
-		err = a.client.Status().Update(ctx, newMachine)
-		if err != nil {
-			return errors.Errorf("update status of machine %v/%v", machine.Namespace, machine.Name, err)
-		}
+	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
+	if err != nil {
+		return errors.Errorf("update status for machine %v/%v: %w", machine.Namespace, machine.Name, err)
 	}
 
 	return &clustererror.RequeueAfterError{
@@ -201,16 +184,14 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 		}
 	}
 
-	newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
-	raw, err := util.ToRaw(newStatus)
-	if err != nil {
-		return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
 	}
-	newMachine := machine.DeepCopy()
-	newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
-	// TODO: Retry on conflict
-	err = a.client.Status().Update(context.TODO(), newMachine)
+
+	newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
+
+	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
 	if err != nil {
 		return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
 	}
@@ -260,20 +241,16 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 		}
 	}
 
-	if !reflect.DeepEqual(newStatus, machine.Status) {
-		raw, err := util.ToRaw(newStatus)
-		if err != nil {
-			return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
-				machine.Namespace, machine.Name, err)
-		}
-		newMachine := machine.DeepCopy()
-		newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
-
-		err = a.client.Status().Update(context.TODO(), newMachine)
-		if err != nil {
-			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
-		}
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
 	}
+
+	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
+	if err != nil {
+		return errors.Errorf("update spec for machine %v/%v", machine.Namespace, machine.Name, err)
+	}
+
 	if !newStatus.Ready {
 		return &clustererror.RequeueAfterError{
 			RequeueAfter: 15 * time.Second,
