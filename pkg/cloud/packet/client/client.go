@@ -41,6 +41,8 @@ type Client interface {
 	CreateDevice(spec *packetv1alpha1.PacketMachineProviderSpec) (*packetv1alpha1.PacketMachineProviderStatus, error)
 	// GetDevice gets a device on Packet
 	GetDevice(deviceID string) (*packetv1alpha1.PacketMachineProviderStatus, error)
+	// DeleteDevice deletes a device on Packet
+	DeleteDevice(deviceID string) error
 }
 
 func NewClient(secret *corev1.Secret) (Client, error) {
@@ -112,6 +114,14 @@ func (c *client) GetDevice(deviceID string) (*packetv1alpha1.PacketMachineProvid
 		return nil, err
 	}
 	return newStatus(device), nil
+}
+
+func (c *client) DeleteDevice(deviceID string) error {
+	_, err := c.c.Devices.Delete(deviceID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func newStatus(d *packngo.Device) *packetv1alpha1.PacketMachineProviderStatus {

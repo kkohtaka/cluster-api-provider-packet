@@ -159,7 +159,61 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 // Delete deletes a machine and is invoked by the Machine Controller
 func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	log.Printf("Deleting machine %v for cluster %v.", machine.Name, cluster.Name)
-	log.Printf("TODO: MachineActuator.Delete() is not implemented yet.")
+	if cluster == nil {
+		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+	}
+
+	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
+	if err != nil {
+		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	var secret corev1.Secret
+	objKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      clusterSpec.SecretRef,
+	}
+	err = a.client.Get(ctx, objKey, &secret)
+	if err != nil {
+		return errors.Errorf("get secret %v: %w", objKey, err)
+	}
+	c, err := packet.NewClient(&secret)
+	if err != nil {
+		return errors.Errorf("create Packet API client: %w", err)
+	}
+
+	status, err := util.ToMachineProviderStatus(&machine.Status)
+	if err != nil {
+		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	if status.ID == "" {
+		return errors.Errorf(".Status.ID is not set for machine %v/%v", machine.Namespace, machine.Name)
+	}
+
+	err = c.DeleteDevice(status.ID)
+	if err != nil {
+		if packet.IsNotFoundError(err) {
+			log.Printf("specified device %v for machine %v/%v has been already deleted",
+				status.ID, machine.Namespace, machine.Name)
+		} else {
+			return errors.Errorf("delete a device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+		}
+	}
+
+	newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
+	raw, err := util.ToRaw(newStatus)
+	if err != nil {
+		return errors.Errorf("generate raw data of machine provider status for machine %v/%v: %w",
+			machine.Namespace, machine.Name, err)
+	}
+	newMachine := machine.DeepCopy()
+	newMachine.Status.ProviderStatus = &runtime.RawExtension{Raw: raw}
+	// TODO: Retry on conflict
+	err = a.client.Status().Update(context.TODO(), newMachine)
+	if err != nil {
+		return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+	}
 	return nil
 }
 
