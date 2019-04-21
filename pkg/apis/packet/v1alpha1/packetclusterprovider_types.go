@@ -31,6 +31,7 @@ type PacketClusterProviderSpec struct {
 
 // PacketClusterProviderStatus defines the observed state of PacketClusterProvider
 type PacketClusterProviderStatus struct {
+	ProjectID string `json:"projectID,omitempty"`
 }
 
 // +genclient

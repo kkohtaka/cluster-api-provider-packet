@@ -24,7 +24,6 @@ import (
 
 	clusterapis "sigs.k8s.io/cluster-api/pkg/apis"
 	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
-	"sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset"
 	capicluster "sigs.k8s.io/cluster-api/pkg/controller/cluster"
 	capimachine "sigs.k8s.io/cluster-api/pkg/controller/machine"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -64,14 +63,8 @@ func main() {
 
 	log.Info("Registering Components.")
 
-	cs, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		log.Error(err, "unable to set up clientset")
-		os.Exit(1)
-	}
-
 	clusterActuator, err := cluster.NewActuator(cluster.ActuatorParams{
-		ClustersGetter: cs.ClusterV1alpha1(),
+		Client: mgr.GetClient(),
 	})
 	if err != nil {
 		log.Error(err, "unable to create cluster actuator")

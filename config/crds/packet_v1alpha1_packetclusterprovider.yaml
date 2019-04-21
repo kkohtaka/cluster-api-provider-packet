@@ -45,6 +45,9 @@ spec:
           - secretRef
           type: object
         status:
+          properties:
+            projectID:
+              type: string
           type: object
   version: v1alpha1
 status:
