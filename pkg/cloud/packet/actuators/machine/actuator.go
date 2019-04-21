@@ -76,18 +76,13 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	if err != nil {
 		return errors.Errorf("decode cluster provider spec for machine %v: %w", machineKey, err)
 	}
-	var secret corev1.Secret
-	secretKey := types.NamespacedName{
-		Namespace: cluster.Namespace,
-		Name:      clusterSpec.SecretRef,
-	}
-	err = a.client.Get(ctx, secretKey, &secret)
+
+	clusterStatus, err := util.ToClusterProviderStatus(&cluster.Status)
 	if err != nil {
-		return errors.Errorf("get secret %v: %w", secretKey, err)
+		return errors.Errorf("decode cluster provider status for machine %v: %w", machineKey, err)
 	}
-	c, err := packet.NewClient(&secret)
-	if err != nil {
-		return errors.Errorf("create Packet API client: %w", err)
+	if clusterStatus.ProjectID == "" {
+		return errors.Errorf("Packet project ID is not set in cluster provider status for machine %v", machineKey)
 	}
 
 	spec, err := util.ToMachineProviderSpec(&machine.Spec)
@@ -104,13 +99,8 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 		log.Printf("machine already has .Status.ID: %v", status.ID)
 	}
 
-	projectID, err := c.GetProjectID(clusterSpec.Project)
-	if err != nil {
-		return errors.Errorf("get project ID: %w", err)
-	}
-
 	newSpec := spec.DeepCopy()
-	newSpec.ProjectID = projectID
+	newSpec.ProjectID = clusterStatus.ProjectID
 	newSpec.Hostname = machine.Name
 	newSpec.Facility = clusterSpec.Facility
 	newSpec.Plan = clusterSpec.Plan
@@ -120,6 +110,20 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	err = util.UpdateMachineProviderSpec(a.client, machineKey, newSpec)
 	if err != nil {
 		return errors.Errorf("update spec for machine %v: %w", machineKey, err)
+	}
+
+	var secret corev1.Secret
+	secretKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      clusterSpec.SecretRef,
+	}
+	err = a.client.Get(ctx, secretKey, &secret)
+	if err != nil {
+		return errors.Errorf("get secret %v: %w", secretKey, err)
+	}
+	c, err := packet.NewClient(&secret)
+	if err != nil {
+		return errors.Errorf("create Packet API client: %w", err)
 	}
 
 	newStatus, err := c.CreateDevice(newSpec)
