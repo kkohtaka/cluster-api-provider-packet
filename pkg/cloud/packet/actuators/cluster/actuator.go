@@ -61,26 +61,29 @@ func NewActuator(params ActuatorParams) (*Actuator, error) {
 func (a *Actuator) Reconcile(cluster *clusterv1.Cluster) error {
 	log.Printf("Reconciling cluster %v.", cluster.Name)
 
+	clusterKey := types.NamespacedName{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Name,
+	}
+
 	spec, err := util.ToClusterProviderSpec(&cluster.Spec)
 	if err != nil {
-		return errors.Errorf("decode cluster provider spec for cluster %v/%v: %w",
-			cluster.Namespace, cluster.Name, err)
+		return errors.Errorf("decode cluster provider spec for cluster %v: %w", clusterKey, err)
 	}
 
 	status, err := util.ToClusterProviderStatus(&cluster.Status)
 	if err != nil {
-		return errors.Errorf("decode cluster provider status for cluster %v/%v: %w",
-			cluster.Namespace, cluster.Name, err)
+		return errors.Errorf("decode cluster provider status for cluster %v: %w", clusterKey, err)
 	}
 
 	var secret corev1.Secret
-	objKey := types.NamespacedName{
+	secretKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      spec.SecretRef,
 	}
-	err = a.client.Get(context.TODO(), objKey, &secret)
+	err = a.client.Get(context.TODO(), secretKey, &secret)
 	if err != nil {
-		return errors.Errorf("get secret %v: %w", objKey, err)
+		return errors.Errorf("get secret %v: %w", secretKey, err)
 	}
 	c, err := packet.NewClient(&secret)
 	if err != nil {
@@ -95,14 +98,9 @@ func (a *Actuator) Reconcile(cluster *clusterv1.Cluster) error {
 	newStatus := status.DeepCopy()
 	newStatus.ProjectID = projectID
 
-	clusterKey := types.NamespacedName{
-		Namespace: cluster.Namespace,
-		Name:      cluster.Name,
-	}
-
 	util.UpdateClusterProviderStatus(a.client, clusterKey, newStatus)
 	if err != nil {
-		return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
+		return errors.Errorf("update status of cluster %v", clusterKey, err)
 	}
 	return nil
 }
@@ -111,23 +109,22 @@ func (a *Actuator) Reconcile(cluster *clusterv1.Cluster) error {
 func (a *Actuator) Delete(cluster *clusterv1.Cluster) error {
 	log.Printf("Deleting cluster %v.", cluster.Name)
 
-	status, err := util.ToClusterProviderStatus(&cluster.Status)
-	if err != nil {
-		return errors.Errorf("decode cluster provider status for cluster %v/%v: %w",
-			cluster.Namespace, cluster.Name, err)
-	}
-
-	newStatus := status.DeepCopy()
-	newStatus.ProjectID = ""
-
 	clusterKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name,
 	}
 
+	status, err := util.ToClusterProviderStatus(&cluster.Status)
+	if err != nil {
+		return errors.Errorf("decode cluster provider status for cluster %v: %w", clusterKey, err)
+	}
+
+	newStatus := status.DeepCopy()
+	newStatus.ProjectID = ""
+
 	util.UpdateClusterProviderStatus(a.client, clusterKey, newStatus)
 	if err != nil {
-		return errors.Errorf("update status of cluster %v/%v", cluster.Namespace, cluster.Name, err)
+		return errors.Errorf("update status of cluster %v", clusterKey, err)
 	}
 	return nil
 }

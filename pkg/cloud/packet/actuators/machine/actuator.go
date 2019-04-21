@@ -61,24 +61,29 @@ func NewActuator(params ActuatorParams) (*Actuator, error) {
 
 // Create creates a machine and is invoked by the Machine Controller
 func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
-	log.Printf("Creating machine %v for cluster %v.", machine.Name, cluster.Name)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
+	}
+
+	log.Printf("Creating machine %v for cluster %v.", machineKey, cluster.Name)
+
 	if cluster == nil {
-		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+		return errors.Errorf("missing cluster for machine %v", machineKey)
 	}
 
 	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
 	if err != nil {
-		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode cluster provider spec for machine %v: %w", machineKey, err)
 	}
 	var secret corev1.Secret
-	objKey := types.NamespacedName{
+	secretKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      clusterSpec.SecretRef,
 	}
-	err = a.client.Get(ctx, objKey, &secret)
+	err = a.client.Get(ctx, secretKey, &secret)
 	if err != nil {
-		return errors.Errorf("get secret %v: %w", objKey, err)
+		return errors.Errorf("get secret %v: %w", secretKey, err)
 	}
 	c, err := packet.NewClient(&secret)
 	if err != nil {
@@ -87,14 +92,12 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	spec, err := util.ToMachineProviderSpec(&machine.Spec)
 	if err != nil {
-		return errors.Errorf("decode machine provider spec for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode machine provider spec for machine %v: %w", machineKey, err)
 	}
 
 	status, err := util.ToMachineProviderStatus(&machine.Status)
 	if err != nil {
-		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode machine provider status for machine %v: %w", machineKey, err)
 	}
 
 	if status.ID != "" {
@@ -104,11 +107,6 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	projectID, err := c.GetProjectID(clusterSpec.Project)
 	if err != nil {
 		return errors.Errorf("get project ID: %w", err)
-	}
-
-	machineKey := types.NamespacedName{
-		Namespace: machine.Namespace,
-		Name:      machine.Name,
 	}
 
 	newSpec := spec.DeepCopy()
@@ -121,17 +119,17 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	err = util.UpdateMachineProviderSpec(a.client, machineKey, newSpec)
 	if err != nil {
-		return errors.Errorf("update spec for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+		return errors.Errorf("update spec for machine %v: %w", machineKey, err)
 	}
 
 	newStatus, err := c.CreateDevice(newSpec)
 	if err != nil {
-		return errors.Errorf("create device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+		return errors.Errorf("create device for machine %v: %w", machineKey, err)
 	}
 
 	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
 	if err != nil {
-		return errors.Errorf("update status for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+		return errors.Errorf("update status for machine %v: %w", machineKey, err)
 	}
 
 	return &clustererror.RequeueAfterError{
@@ -141,24 +139,29 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 // Delete deletes a machine and is invoked by the Machine Controller
 func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
-	log.Printf("Deleting machine %v for cluster %v.", machine.Name, cluster.Name)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
+	}
+
+	log.Printf("Deleting machine %v for cluster %v.", machineKey, cluster.Name)
+
 	if cluster == nil {
-		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+		return errors.Errorf("missing cluster for machine %v", machineKey)
 	}
 
 	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
 	if err != nil {
-		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode cluster provider spec for machine %v: %w", machineKey, err)
 	}
 	var secret corev1.Secret
-	objKey := types.NamespacedName{
+	secretKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      clusterSpec.SecretRef,
 	}
-	err = a.client.Get(ctx, objKey, &secret)
+	err = a.client.Get(ctx, secretKey, &secret)
 	if err != nil {
-		return errors.Errorf("get secret %v: %w", objKey, err)
+		return errors.Errorf("get secret %v: %w", secretKey, err)
 	}
 	c, err := packet.NewClient(&secret)
 	if err != nil {
@@ -167,30 +170,24 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	status, err := util.ToMachineProviderStatus(&machine.Status)
 	if err != nil {
-		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode machine provider status for machine %v: %w", machineKey, err)
 	}
 	if status.ID != "" {
 		err = c.DeleteDevice(status.ID)
 		if err != nil {
 			if packet.IsNotFoundError(err) {
-				log.Printf("specified device %v for machine %v/%v has been already deleted",
-					status.ID, machine.Namespace, machine.Name)
+				log.Printf("specified device %v for machine %v has been already deleted",
+					status.ID, machineKey)
 			} else {
-				return errors.Errorf("delete a device for machine %v/%v: %w", machine.Namespace, machine.Name, err)
+				return errors.Errorf("delete a device for machine %v: %w", machineKey, err)
 			}
-		}
-
-		machineKey := types.NamespacedName{
-			Namespace: machine.Namespace,
-			Name:      machine.Name,
 		}
 
 		newStatus := &packetv1alpha1.PacketMachineProviderStatus{}
 
 		err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
 		if err != nil {
-			return errors.Errorf("update machine %v/%v", machine.Namespace, machine.Name, err)
+			return errors.Errorf("update machine %v", machineKey, err)
 		}
 	}
 	return nil
@@ -198,24 +195,29 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 // Update updates a machine and is invoked by the Machine Controller
 func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
-	log.Printf("Updating machine %v for cluster %v.", machine.Name, cluster.Name)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
+	}
+
+	log.Printf("Updating machine %v for cluster %v.", machineKey, cluster.Name)
+
 	if cluster == nil {
-		return errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+		return errors.Errorf("missing cluster for machine %v", machineKey)
 	}
 
 	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
 	if err != nil {
-		return errors.Errorf("decode cluster provider spec for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode cluster provider spec for machine %v: %w", machineKey, err)
 	}
 	var secret corev1.Secret
-	objKey := types.NamespacedName{
+	secretKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      clusterSpec.SecretRef,
 	}
-	err = a.client.Get(ctx, objKey, &secret)
+	err = a.client.Get(ctx, secretKey, &secret)
 	if err != nil {
-		return errors.Errorf("get secret %v: %w", objKey, err)
+		return errors.Errorf("get secret %v: %w", secretKey, err)
 	}
 	c, err := packet.NewClient(&secret)
 	if err != nil {
@@ -224,8 +226,7 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	status, err := util.ToMachineProviderStatus(&machine.Status)
 	if err != nil {
-		return errors.Errorf("decode machine provider status for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return errors.Errorf("decode machine provider status for machine %v: %w", machineKey, err)
 	}
 
 	newStatus, err := c.GetDevice(status.ID)
@@ -234,19 +235,13 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 			// If a device specified by .Status.ID is not found, reset the .Status field
 			newStatus = &packetv1alpha1.PacketMachineProviderStatus{}
 		} else {
-			return errors.Errorf("get device for machine %v/%v: %w",
-				machine.Namespace, machine.Name, err)
+			return errors.Errorf("get device for machine %v: %w", machineKey, err)
 		}
-	}
-
-	machineKey := types.NamespacedName{
-		Namespace: machine.Namespace,
-		Name:      machine.Name,
 	}
 
 	err = util.UpdateMachineProviderStatus(a.client, machineKey, newStatus)
 	if err != nil {
-		return errors.Errorf("update spec for machine %v/%v", machine.Namespace, machine.Name, err)
+		return errors.Errorf("update spec for machine %v", machineKey, err)
 	}
 
 	if !newStatus.Ready {
@@ -259,30 +254,35 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 // Exists test for the existance of a machine and is invoked by the Machine Controller
 func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) (bool, error) {
-	log.Printf("Checking if machine %v for cluster %v exists.", machine.Name, cluster.Name)
-	if cluster == nil {
-		return false, errors.Errorf("missing cluster for machine %v/%v", machine.Namespace, machine.Name)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
 	}
+
+	log.Printf("Checking if machine %v for cluster %v exists.", machineKey, cluster.Name)
+
+	if cluster == nil {
+		return false, errors.Errorf("missing cluster for machine %v", machineKey)
+	}
+
 	clusterSpec, err := util.ToClusterProviderSpec(&cluster.Spec)
 	if err != nil {
-		return false, errors.Errorf("decode machine provider clusterSpec for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return false, errors.Errorf("decode machine provider clusterSpec for machine %v: %w", machineKey, err)
 	}
 
 	var secret corev1.Secret
-	objKey := types.NamespacedName{
+	secretKey := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      clusterSpec.SecretRef,
 	}
-	err = a.client.Get(ctx, objKey, &secret)
+	err = a.client.Get(ctx, secretKey, &secret)
 	if err != nil {
-		return false, errors.Errorf("get secret %v: %w", objKey, err)
+		return false, errors.Errorf("get secret %v: %w", secretKey, err)
 	}
 
 	status, err := util.ToMachineProviderStatus(&machine.Status)
 	if err != nil {
-		return false, errors.Errorf("decode machine provider status for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return false, errors.Errorf("decode machine provider status for machine %v: %w", machineKey, err)
 	}
 	if status.ID == "" {
 		return false, nil
@@ -294,8 +294,7 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 	}
 	exist, err := c.DoesDeviceExist(status.ID)
 	if err != nil {
-		return false, errors.Errorf("check device existence for machine %v/%v: %w",
-			machine.Namespace, machine.Name, err)
+		return false, errors.Errorf("check device existence for machine %v: %w", machineKey, err)
 	}
 	return exist, nil
 }
@@ -306,12 +305,16 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 // GetIP returns IP address of the machine in the cluster.
 func (a *Actuator) GetIP(cluster *clusterv1.Cluster, machine *clusterv1.Machine) (string, error) {
-	log.Printf("Getting IP of machine %v for cluster %v.", machine.Name, cluster.Name)
+	machineKey := types.NamespacedName{
+		Namespace: machine.Namespace,
+		Name:      machine.Name,
+	}
+	log.Printf("Getting IP of machine %v for cluster %v.", machineKey, cluster.Name)
 	return "", fmt.Errorf("TODO: Not yet implemented")
 }
 
 // GetKubeConfig gets a kubeconfig from the master.
 func (a *Actuator) GetKubeConfig(cluster *clusterv1.Cluster, master *clusterv1.Machine) (string, error) {
-	log.Printf("Getting IP of machine %v for cluster %v.", master.Name, cluster.Name)
+	log.Printf("Getting IP of machine %v for cluster %v.", master, cluster.Name)
 	return "", fmt.Errorf("TODO: Not yet implemented")
 }
